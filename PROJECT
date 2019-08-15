@@ -1,0 +1,7 @@
+version: "2"
+domain: tag-label-sync.io
+repo: tag-label-sync.io
+resources:
+- group: taglabel
+  version: v1
+  kind: TagLabelSync
