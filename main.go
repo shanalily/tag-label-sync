@@ -25,6 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	taglabelv1 "tag-label-sync.io/api/v1"
+	"tag-label-sync.io/controller"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -60,6 +61,10 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := controller.Add(mgr); err != nil {
+		setupLog.Error(err, "unable to register controller to manager")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")
