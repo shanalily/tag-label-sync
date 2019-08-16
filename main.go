@@ -61,10 +61,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := controller.Add(mgr); err != nil {
-		setupLog.Error(err, "unable to register controller to manager")
+	if err = (&controller.ReconcileTagLabelSync{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller")
 		os.Exit(1)
 	}
+	setupLog.Info("successfully registered controller")
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")

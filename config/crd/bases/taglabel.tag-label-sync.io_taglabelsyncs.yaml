@@ -1,0 +1,59 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  name: taglabelsyncs.taglabel.tag-label-sync.io
+spec:
+  group: taglabel.tag-label-sync.io
+  names:
+    kind: TagLabelSync
+    plural: taglabelsyncs
+  scope: ""
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: TagLabelSync is the Schema for the taglabelsyncs API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: TagLabelSyncSpec defines the desired state of TagLabelSync
+          properties:
+            identity:
+              description: identify the Azure VMs
+              properties:
+                principalID:
+                  type: string
+                tenantID:
+                  type: string
+              type: object
+            resourceGroupID:
+              type: string
+          type: object
+        status:
+          description: TagLabelSyncStatus defines the observed state of TagLabelSync
+          type: object
+      type: object
+  versions:
+  - name: v1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

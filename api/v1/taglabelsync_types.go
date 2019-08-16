@@ -30,16 +30,23 @@ type TagLabelSyncSpec struct {
 	// should I assume only one cluster in one resource group? do I specify the cluster?
 	// isn't this applied to only one cluster?
 
-	ResourceGroupID string `json:"resourceGroupID,omitempty"` // only looking at one resource group
+	// identify the Azure VMs
+	Identity        AzureManagedIdentity `json:"identity,omitempty"`        // should this be a struct?
+	ResourceGroupID string               `json:"resourceGroupID,omitempty"` // only looking at one resource group
+
+	// identify the cluster nodes
 }
 
 // TagLabelSyncStatus defines the observed state of TagLabelSync
 type TagLabelSyncStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// store node labels here?
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // TagLabelSync is the Schema for the taglabelsyncs API
 type TagLabelSync struct {
