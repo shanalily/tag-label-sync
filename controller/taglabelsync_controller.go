@@ -72,6 +72,8 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 		if err != nil {
 			log.Error(err, "failed to get VMSS")
 		}
+        // does this vmss object have anything useful or is it all empty fields :'(
+		log.V(1).Info("testing a field of vmss", "ID", vmss.ID)
 		log.V(1).Info("printing tags...", "number of tags", len(vmss.Tags))
 		for k, v := range vmss.Tags {
 			log.V(1).Info("virtual machine scale set", "tag", k, "tag value", *v)

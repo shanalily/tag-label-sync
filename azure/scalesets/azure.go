@@ -27,20 +27,6 @@ func (c *client) Get(ctx context.Context, group, name string) (compute.VirtualMa
 	return c.VirtualMachineScaleSetsClient.Get(ctx, group, name)
 }
 
-func (c *client) CreateOrUpdate(ctx context.Context, group, name string, sg compute.VirtualMachineScaleSet) (compute.VirtualMachineScaleSet, error) {
-	f, err := c.VirtualMachineScaleSetsClient.CreateOrUpdate(ctx, group, name, sg)
-	if err != nil {
-		return compute.VirtualMachineScaleSet{}, err
-	}
-
-	err = f.WaitForCompletionRef(ctx, c.Client)
-	if err != nil {
-		return compute.VirtualMachineScaleSet{}, err
-	}
-
-	return f.Result(c.VirtualMachineScaleSetsClient)
-}
-
 func (c *client) Delete(ctx context.Context, group, name string) error {
 	f, err := c.VirtualMachineScaleSetsClient.Delete(ctx, group, name)
 	if err != nil {
