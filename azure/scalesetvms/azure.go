@@ -16,7 +16,7 @@ type client struct {
 }
 
 func newClient(subID string) (*client, error) {
-	c, err := NewScaleSetVMsClient(subID)
+	c, err := azure.NewScaleSetVMsClient(subID)
 	if err != nil {
 		return nil, err
 	}

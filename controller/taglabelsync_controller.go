@@ -9,14 +9,13 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	taglabelv1 "tag-label-sync.io/api/v1"
 	"tag-label-sync.io/azure"
+	"tag-label-sync.io/azure/scalesets"
+	"tag-label-sync.io/azure/scalesetvms"
 )
 
 // type ResourceType string
@@ -32,27 +31,6 @@ func newReconciler(mgr manager.Manager, ctx context.Context) reconcile.Reconcile
 		Scheme: mgr.GetScheme(),
 		// ctx:    ctx,
 	}
-}
-
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	c, err := controller.New("tag-label-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	// watch changes in VM tags... I need to change this, unless I can somehow get tag info through my Kind
-	err = c.Watch(&source.Kind{Type: &taglabelv1.TagLabelSync{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	// watch changes in node labels? should this come later?
-	err = c.Watch(&source.Kind{Type: &corev1.Node{}}, &handler.EnqueueRequestForObject{})
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 type ReconcileTagLabelSync struct {
@@ -85,13 +63,30 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 		log.Error(err, "invalid provider ID")
 	}
 
-	// hardcoded for vmss right now
 	if provider.ResourceType == VMSS {
-		vmssClient, err := azure.NewVMSSClient(provider.SubscriptionID, provider.ResourceGroup)
+		vmssClient, err := scalesets.NewClient(provider.SubscriptionID, provider.ResourceGroup)
 		if err != nil {
 			log.Error(err, "failed to create VMSS client")
 		}
-		vmss, err := vmssClient.List(ctx, provider.ResourceName)
+		vmss, err := vmssClient.Get(ctx, provider.ResourceName)
+		if err != nil {
+			log.Error(err, "failed to get VMSS")
+		}
+		log.V(1).Info("printing tags...", "number of tags", len(vmss.Tags))
+		for k, v := range vmss.Tags {
+			log.V(1).Info("virtual machine scale set", "tag", k, "tag value", *v)
+		}
+	} else if provider.ResourceType == VM {
+		vmClient, err := scalesetvms.NewClient(provider.SubscriptionID, provider.ResourceGroup)
+		if err != nil {
+			log.Error(err, "failed to create VM client")
+		}
+		// vms, err := vmClient.List(ctx, provider.ResourceName)
+		_, err = vmClient.List(ctx, provider.ResourceName)
+		if err != nil {
+			log.Error(err, "failed to get VMs")
+		}
+		// log.V(1).Info("virtual machine scale set VM", "tags", vms.Tags)
 	}
 
 	log.V(1).Info("Node has provider ID", "provider ID", node.Spec.ProviderID)

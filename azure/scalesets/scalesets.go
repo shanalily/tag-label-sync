@@ -4,9 +4,6 @@
 package scalesets
 
 import (
-	"encoding/base64"
-	"fmt"
-
 	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2019-03-01/compute"
 	"github.com/Azure/go-autorest/autorest/to"
 )
@@ -14,36 +11,32 @@ import (
 type SpecOption func(*Spec) *Spec
 
 type Spec struct {
-	internal *compute.VirtualMachineScaleSet
-}
-
-func Internal(spec *Spec) *compute.VirtualMachineScaleSet {
-	return spec.internal
+	compute.VirtualMachineScaleSet
 }
 
 func Name(name string) SpecOption {
 	return func(o *Spec) *Spec {
-		o.internal.Name = &name
+		o.Name = &name
 		return o
 	}
 }
 
 func Location(location string) SpecOption {
 	return func(o *Spec) *Spec {
-		o.internal.Location = &location
+		o.Location = &location
 		return o
 	}
 }
 
 func Prefix(namePrefix string) SpecOption {
 	return func(o *Spec) *Spec {
-		o.internal.VirtualMachineScaleSetProperties.VirtualMachineProfile.OsProfile.ComputerNamePrefix = &namePrefix
+		o.VirtualMachineScaleSetProperties.VirtualMachineProfile.OsProfile.ComputerNamePrefix = &namePrefix
 		return o
 	}
 }
 
 func defaultSpec() *Spec {
-	return &Spec{internal: &compute.VirtualMachineScaleSet{
+	return &Spec{compute.VirtualMachineScaleSet{
 		Sku: &compute.Sku{},
 		Identity: &compute.VirtualMachineScaleSetIdentity{
 			UserAssignedIdentities: map[string]*compute.VirtualMachineScaleSetIdentityUserAssignedIdentitiesValue{},

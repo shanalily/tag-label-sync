@@ -13,7 +13,6 @@ import (
 
 type Service interface {
 	Get(context.Context, string, string) (compute.VirtualMachineScaleSet, error)
-	CreateOrUpdate(context.Context, string, string, compute.VirtualMachineScaleSet) (compute.VirtualMachineScaleSet, error)
 	Delete(ctx context.Context, group, name string) error
 }
 
@@ -39,21 +38,12 @@ func (c *Client) Get(ctx context.Context, name string) (*Spec, error) {
 		return nil, err
 	}
 
-	return &Spec{&id}, nil
-}
-
-func (c *Client) Ensure(ctx context.Context, name string, spec *Spec) error {
-	result, err := c.internal.CreateOrUpdate(ctx, c.group, name, *spec.internal)
-	if err != nil {
-		return err
-	}
-	spec.internal = &result
-	return nil
+	return &Spec{id}, nil
 }
 
 func (c *Client) Delete(ctx context.Context, name string) error {
 	err := c.internal.Delete(ctx, c.group, name)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && azure.IsNotFound(err) {
 		return nil
 	}
 	return err
