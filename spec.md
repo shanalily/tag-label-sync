@@ -27,12 +27,13 @@ and vice versa.
 3. The controller can be run with one of the following authentication methods:
     - Service Principals.
     - User Assigned Identity via "Pod Identity".
-4. The controller can be limited to run on only nodes within a resource group filter.
+4. The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3).
 5. Configurable options include:
     - Switching to one-way synchronization.
     - Sychronizing VM tags instead of VMSS tags.
     - The node label prefix. An empty prefix will be permitted.
     - The policy for conflicting tags. VM/VMSS tags or node labels can be given priority.
+6. A sample YAML file will be provided with instructions on what to edit before applying to a cluster.
 
 ## Implementation Challenges
 
