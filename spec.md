@@ -1,5 +1,7 @@
 # ARM Tag to Node Label Synchronization
 
+Based off of [this document](https://microsoft.sharepoint.com/:w:/r/teams/azurecontainercompute/_layouts/15/Doc.aspx?sourcedoc=%7B3a2d20bc-7fa4-450c-8bcf-67156b7b594d%7D&action=edit&wdPid=14896249).
+
 ## Purpose
 
 The purpose of this Kubernetes controller is to sync ARM VM/VMSS tags and node labels in an AKS cluster.
@@ -10,7 +12,6 @@ or perform a two-way sync.
 
 Multiple customers have required this synchronization.
 Their motivation is billing organization, housekeeping and overall resource tracking which works well on ARM tags.
-[Source](https://microsoft.sharepoint.com/:w:/r/teams/azurecontainercompute/_layouts/15/Doc.aspx?sourcedoc=%7B3a2d20bc-7fa4-450c-8bcf-67156b7b594d%7D&action=edit&wdPid=14896249).
 
 ## How it will work
 
@@ -24,8 +25,8 @@ and vice versa.
     `azure.tags/<tag-name>/<tag-value>`. This default prefix is to encourage the use of a prefix.
 2. The controller runs as a deployment with 2 replicas. Leader election is enabled.
 3. The controller can be run with one of the following authentication methods:
-    - Service Principals (managed identity?).
-    - User assigned identity via "Pod Identity".
+    - Service Principals.
+    - User Assigned Identity via "Pod Identity".
 4. The controller can be limited to run on only nodes within a resource group filter.
 5. Configurable options include:
     - Switching to one-way synchronization.
@@ -37,7 +38,7 @@ and vice versa.
 
 Currently, we need to wait for nodes to be ready to be able to run the controller and access VM/VMSS tags.
 
-Make sure updates don't delete tags and labels.
+Cluster updates should not delete tags and labels.
 
 ## Extensions
 
