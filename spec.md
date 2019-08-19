@@ -19,7 +19,7 @@ Default settings will have two-way synchronization with VMSS tags and node label
 1. For each VMSS and node, any tags that exist on the VMSS and not as a label on the node, the label will be created,
 and vice versa.
     - If there is a conflict where a tag and label exist with the same name and a different value,
-      nothing will be done to resolve the conflict and the conflict will be logged.
+      the default action is that nothing will be done to resolve the conflict and the conflict will be logged.
     - ARM tags will be added as node labels with configurable prefix, and a default prefix of azure.tags, with the form 
     azure.tags/<tag-name>/<tag-value>. This default prefix is to encourage the use of a prefix.
 2. The controller runs as a deployment with 2 replicas. Leader election is enabled.
