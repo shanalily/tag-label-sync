@@ -36,10 +36,10 @@ and vice versa.
 
 ## Implementation Challenges
 
-Currently, we need to wait for nodes to be ready to be able to run the controller and access VM/VMSS tags.
+- Currently, we need to wait for nodes to be ready to be able to run the controller and access VM/VMSS tags.
 
-Cluster updates should not delete tags and labels.
+- Cluster updates should not delete tags and labels.
 
 ## Extensions
 
-Look into taints.
+Consider syncing node taints as ARM tags.
