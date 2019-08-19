@@ -20,13 +20,18 @@ Default settings will have two-way synchronization with VMSS tags and node label
 and vice versa.
     - If there is a conflict where a tag and label exist with the same name and a different value,
       the default action is that nothing will be done to resolve the conflict and the conflict will be logged.
-    - ARM tags will be added as node labels with configurable prefix, and a default prefix of azure.tags, with the form 
+    - ARM tags will be added as node labels with configurable prefix, and a default prefix of `azure.tags`, with the form 
     `azure.tags/<tag-name>/<tag-value>`. This default prefix is to encourage the use of a prefix.
 2. The controller runs as a deployment with 2 replicas. Leader election is enabled.
 3. The controller can be run with one of the following authentication methods:
     - Service Principals (managed identity?).
     - User assigned identity via "Pod Identity".
 4. The controller can be limited to run on only nodes within a resource group filter.
+5. Configurable options include:
+    - Switching to one-way synchronization.
+    - Sychronizing VM tags instead of VMSS tags.
+    - The node label prefix. An empty prefix will be permitted.
+    - The policy for conflicting tags. VM/VMSS tags or node labels can be given priority.
 
 ## Implementation Challenges
 
