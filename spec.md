@@ -21,7 +21,7 @@ and vice versa.
     - If there is a conflict where a tag and label exist with the same name and a different value,
       the default action is that nothing will be done to resolve the conflict and the conflict will be logged.
     - ARM tags will be added as node labels with configurable prefix, and a default prefix of azure.tags, with the form 
-    azure.tags/\<tag-name>/\<tag-value>. This default prefix is to encourage the use of a prefix.
+    `azure.tags/\<tag-name>/\<tag-value>`. This default prefix is to encourage the use of a prefix.
 2. The controller runs as a deployment with 2 replicas. Leader election is enabled.
 3. The controller can be run with one of the following authentication methods:
     - Service Principals (managed identity?).
