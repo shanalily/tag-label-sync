@@ -2,6 +2,8 @@ package controller
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -64,7 +66,8 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 		log.Error(err, "invalid provider ID")
 	}
 
-	if provider.ResourceType == VMSS {
+	switch provider.ResourceType {
+	case VMSS:
 		vmssClient, err := scalesets.NewClient(provider.SubscriptionID, provider.ResourceGroup)
 		if err != nil {
 			log.Error(err, "failed to create VMSS client")
@@ -78,7 +81,12 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 		for k, v := range vmss.Tags {
 			log.V(1).Info("virtual machine scale set", "tag", k, "tag value", *v)
 		}
-	} else if provider.ResourceType == VM {
+
+		if err := r.applyVMSSTagsToNodes(request, vmss, &node); err != nil {
+			log.Error(err, "failed to apply tags to nodes")
+			return reconcile.Result{}, err
+		}
+	case VM:
 		// this needs to change to VMs instead of scaleset VMs!
 		vmClient, err := scalesetvms.NewClient(provider.SubscriptionID, provider.ResourceGroup)
 		if err != nil {
@@ -104,18 +112,44 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 		log.V(1).Info("Node", "label", k, "value", v)
 	}
 
-	if err := r.applyTagsToNodes(); err != nil {
-		log.Error(err, "failed to apply tags to nodes")
-		return reconcile.Result{}, err
-	}
-
 	log.V(1).Info("reconciled")
 
 	return ctrl.Result{}, nil
 }
 
 // pass VM -> tags info and assign to nodes on VMs (unless node already has label)
-func (r *ReconcileTagLabelSync) applyTagsToNodes() error {
+func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, vmss *scalesets.Spec, node *corev1.Node) error {
+	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
+	// each VMSS may have multiple nodes, but I think each nodes is only in one VMSS
+	// whats the fastest way to check if Node already has label? benefit of map
+	// assign all tags on VMSS to Node, if not already there
+	for tagName, tagVal := range vmss.Tags {
+		// what if key exists but different value? what takes priority? currently just going to ignore and only add tags that don't exist
+		labelVal, ok := node.Labels[tagName]
+		if !ok {
+			// add tag as label
+			log.V(1).Info("applying tags to nodes", "tagName", tagName, "tagVal", *tagVal)
+
+			node.Labels[tagName] = *tagVal
+			err := r.Update(context.TODO(), node) // should this be a patch?
+			if err != nil {
+				return err
+			}
+		} else if labelVal != *tagVal {
+			// TODO
+			return errors.New(fmt.Sprintf("Label already exists on node %s but with different value", node.Name))
+		}
+	}
+
+	// assign all labels on Node to VMSS, if not already there
+
+	// for labelName, labelVal := range node.Labels {
+	//	_, ok := vmss.Tags[labelName]
+	//	if !ok {
+	//		// add label as tag
+	//		log.V(1).Info("applying labels to VMSS", "labelVal", labelVal)
+	//	}
+	// }
 	return nil
 }
 
