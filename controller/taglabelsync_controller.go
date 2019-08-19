@@ -14,7 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	taglabelv1 "tag-label-sync.io/api/v1"
 	"tag-label-sync.io/azure"
 	"tag-label-sync.io/azure/scalesets"
 	"tag-label-sync.io/azure/scalesetvms"
@@ -46,14 +45,6 @@ type ReconcileTagLabelSync struct {
 func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	ctx := context.TODO()
 	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
-
-	var sync taglabelv1.TagLabelSync
-	err := r.Get(context.TODO(), request.NamespacedName, &sync)
-	if err != nil {
-		if azure.IsNotFound(err) {
-			return reconcile.Result{}, nil
-		}
-	}
 
 	var node corev1.Node
 	if err := r.Get(ctx, request.NamespacedName, &node); err != nil {
