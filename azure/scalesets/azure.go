@@ -26,17 +26,3 @@ func newClient(subID string) (*client, error) {
 func (c *client) Get(ctx context.Context, group, name string) (compute.VirtualMachineScaleSet, error) {
 	return c.VirtualMachineScaleSetsClient.Get(ctx, group, name)
 }
-
-func (c *client) Delete(ctx context.Context, group, name string) error {
-	f, err := c.VirtualMachineScaleSetsClient.Delete(ctx, group, name)
-	if err != nil {
-		return err
-	}
-
-	err = f.WaitForCompletionRef(ctx, c.Client)
-	if err != nil {
-		return err
-	}
-	_, err = f.Result(c.VirtualMachineScaleSetsClient)
-	return err
-}

@@ -42,7 +42,7 @@ type ReconcileTagLabelSync struct {
 }
 
 func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	ctx := context.Background()
+	ctx := context.TODO()
 	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
 
 	var sync taglabelv1.TagLabelSync
@@ -58,6 +58,7 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 		log.Error(err, "unable to fetch Node")
 		return ctrl.Result{}, err // what should I return here?
 	}
+	log.V(1).Info("provider info", "provider ID", node.Spec.ProviderID)
 	provider, err := azure.ParseProviderID(node.Spec.ProviderID)
 	if err != nil {
 		log.Error(err, "invalid provider ID")
@@ -72,13 +73,13 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 		if err != nil {
 			log.Error(err, "failed to get VMSS")
 		}
-        // does this vmss object have anything useful or is it all empty fields :'(
-		log.V(1).Info("testing a field of vmss", "ID", vmss.ID)
+		// does this vmss object have anything useful or is it all empty fields :'(
 		log.V(1).Info("printing tags...", "number of tags", len(vmss.Tags))
 		for k, v := range vmss.Tags {
 			log.V(1).Info("virtual machine scale set", "tag", k, "tag value", *v)
 		}
 	} else if provider.ResourceType == VM {
+		// this needs to change to VMs instead of scaleset VMs!
 		vmClient, err := scalesetvms.NewClient(provider.SubscriptionID, provider.ResourceGroup)
 		if err != nil {
 			log.Error(err, "failed to create VM client")
@@ -98,6 +99,10 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 	// Get node labels in cluster (I think I can list nodes)
 	// check if any differences
 	// if different, add VM tag to node as label
+
+	for k, v := range node.Labels {
+		log.V(1).Info("Node", "label", k, "value", v)
+	}
 
 	if err := r.applyTagsToNodes(); err != nil {
 		log.Error(err, "failed to apply tags to nodes")

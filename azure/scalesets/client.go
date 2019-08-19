@@ -13,7 +13,6 @@ import (
 
 type Service interface {
 	Get(context.Context, string, string) (compute.VirtualMachineScaleSet, error)
-	Delete(ctx context.Context, group, name string) error
 }
 
 type Client struct {
@@ -32,19 +31,13 @@ func NewClient(subID, group string) (*Client, error) {
 
 func (c *Client) Get(ctx context.Context, name string) (*Spec, error) {
 	id, err := c.internal.Get(ctx, c.group, name)
+	// is the problem that the cluster isn't found and I'm getting a default spec?
 	if err != nil && azure.IsNotFound(err) {
-		return defaultSpec(), nil
+		return nil, err
+		// return defaultSpec(), nil
 	} else if err != nil {
 		return nil, err
 	}
 
 	return &Spec{id}, nil
-}
-
-func (c *Client) Delete(ctx context.Context, name string) error {
-	err := c.internal.Delete(ctx, c.group, name)
-	if err != nil && azure.IsNotFound(err) {
-		return nil
-	}
-	return err
 }
