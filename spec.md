@@ -54,3 +54,4 @@ Default settings will have two-way synchronization with VMSS tags and node label
 ## Questions
 
 - What is meant by a resource group filter? Won't the controller be run in a cluster with resources within a single resource group anyway?
+- What kind of rules should be in place for conflicting tags/labels and strings that don't match naming rules when converted to a tag/label?
