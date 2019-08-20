@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-package scalesetvms
+package vms
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 )
 
 type Service interface {
-	List(context.Context, string, string) ([]compute.VirtualMachineScaleSetVM, error)
+	Get(context.Context, string, string) (compute.VirtualMachine, error)
 }
 
 type Client struct {
@@ -32,13 +32,14 @@ func NewClient(subID, group string) (*Client, error) {
 	return &Client{group: group, internal: c}, nil
 }
 
-func (c *Client) List(ctx context.Context, name string) (*Spec, error) {
-	vmlist, err := c.internal.List(ctx, c.group, name)
+func (c *Client) Get(ctx context.Context, name string) (*Spec, error) {
+	vm, err := c.internal.Get(ctx, c.group, name)
 	if err != nil && azure.IsNotFound(err) {
-		return defaultSpec(), nil
+		// return defaultSpec(), nil
+		return nil, err
 	} else if err != nil {
 		return nil, err
 	}
 
-	return &Spec{internal: vmlist}, nil
+	return &Spec{internal: vm}, nil
 }

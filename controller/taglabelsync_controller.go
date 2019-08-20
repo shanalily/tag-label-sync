@@ -16,7 +16,7 @@ import (
 
 	"tag-label-sync.io/azure"
 	"tag-label-sync.io/azure/scalesets"
-	"tag-label-sync.io/azure/scalesetvms"
+	"tag-label-sync.io/azure/vms"
 )
 
 // type ResourceType string
@@ -79,12 +79,12 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 		}
 	case VM:
 		// this needs to change to VMs instead of scaleset VMs!
-		vmClient, err := scalesetvms.NewClient(provider.SubscriptionID, provider.ResourceGroup)
+		vmClient, err := vms.NewClient(provider.SubscriptionID, provider.ResourceGroup)
 		if err != nil {
 			log.Error(err, "failed to create VM client")
 		}
 		// vms, err := vmClient.List(ctx, provider.ResourceName)
-		_, err = vmClient.List(ctx, provider.ResourceName)
+		_, err = vmClient.Get(ctx, provider.ResourceName)
 		if err != nil {
 			log.Error(err, "failed to get VMs")
 		}
