@@ -1,6 +1,6 @@
 # ARM Tag to Node Label Synchronization
 
-Based off of [this document](https://microsoft.sharepoint.com/:w:/r/teams/azurecontainercompute/_layouts/15/Doc.aspx?sourcedoc=%7B3a2d20bc-7fa4-450c-8bcf-67156b7b594d%7D&action=edit&wdPid=14896249).
+Based off of a pre-existing document.
 
 ## Purpose
 
