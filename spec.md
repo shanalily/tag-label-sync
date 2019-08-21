@@ -52,7 +52,7 @@ data:
 
 ### Pseudo Code
 
-For each VM/VMSS and node:
+- For each VM/VMSS and node:
     - For any tag that exists on the VM/VMSS but does not exist as a label on the node, the label will be created, (and vice versa with labels and tags, if two-way sync is enabled).
     - If there is a conflict where a tag and label exist with the same name and a different value,
       the default action is that nothing will be done to resolve the conflict and the conflict will raise a Kubernetes
