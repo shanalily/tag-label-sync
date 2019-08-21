@@ -13,3 +13,7 @@ export AZURE_CLIENT_ID=
 export AZURE_CLIENT_SECRET=
 
 ```
+
+Create ConfigMap with configurable options and apply to cluster.
+
+Run `make` to build, then `make run` to run.

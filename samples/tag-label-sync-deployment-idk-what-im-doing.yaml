@@ -1,0 +1,10 @@
+apiVersion: apps/v1 # or is it tag-label-sync.io/api/v1 with some kind of custom resource as the kind?
+kind: Deployment 
+metadata:
+    name: tag-label-sync
+spec:
+    replicas: 2
+    spec:
+        containers:
+        - name: ...
+          image: ...

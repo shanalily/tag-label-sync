@@ -13,7 +13,7 @@ type Spec struct {
 	internal compute.VirtualMachine
 }
 
-func Internal(spec *Spec) compute.VirtualMachine {
+func (spec *Spec) Spec() compute.VirtualMachine {
 	return spec.internal
 }
 
