@@ -17,7 +17,7 @@ Their motivation is billing organization, housekeeping and overall resource trac
 
 ### Kubernetes Configuration
 
-- Default settings will have one way synchronization with VMSS tags as node labels.
+- Default settings will have one way synchronization with VM/VMSS tags as node labels.
 
 - The controller runs as a deployment with 2 replicas. Leader election is enabled.
 
