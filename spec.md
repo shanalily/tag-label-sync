@@ -29,18 +29,19 @@ Default settings will have two-way synchronization with VMSS tags and node label
     - The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
     - The policy for conflicting tag/label values. VM/VMSS tags or node labels can be given priority.
     - Configurable interval for synchronization.
-5. A sample YAML file will be provided with instructions on what to edit before applying to a cluster.
+5. Sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
 
 ### Psuedo Code
 
 1. For each VM/VMSS and node:
-    - For any tag that exists on the VM/VMSS but does not exist as a label on the node, the label will be created, and vice versa with labels and tags.
+    - For any tag that exists on the VM/VMSS but does not exist as a label on the node, the label will be created, (and vice versa with labels and tags, if two-way sync is enabled).
     - If there is a conflict where a tag and label exist with the same name and a different value,
       the default action is that nothing will be done to resolve the conflict and the conflict will raise a Kubernetes
       event.
     - ARM tags will be added as node labels with configurable prefix, and a default prefix of `azure.tags`, with the form 
     `azure.tags/<tag-name>/<tag-value>`. This default prefix is to encourage the use of a prefix.
-    - Node tags may not follow Azure tag name conventions (such as "kubernetes.io/os=linux"), so in that case...
+    - Node tags may not follow Azure tag name conventions (such as "kubernetes.io/os=linux" which contains '/'),
+    so in that case...
 
 ## Implementation Challenges
 
