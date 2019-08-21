@@ -17,22 +17,22 @@ Their motivation is billing organization, housekeeping and overall resource trac
 
 ### Kubernetes Configuration
 
-Default settings will have one way synchronization with VMSS tags as node labels.
+- Default settings will have one way synchronization with VMSS tags as node labels.
 
-The controller runs as a deployment with 2 replicas. Leader election is enabled.
+- The controller runs as a deployment with 2 replicas. Leader election is enabled.
 
-The controller can be run with one of the following authentication methods:
+- The controller can be run with one of the following authentication methods:
     - Service Principals.
     - User Assigned Identity via "Pod Identity".
 
-Configurations can be specified in a Kubernetes ConfigMap. Configurable options include:
+- Configurations can be specified in a Kubernetes ConfigMap. Configurable options include:
     - `syncDirection`: Direction of synchronization. Default is `arm-to-node`. Other options are `two-way` and `node-to-arm`.
     - `interval`: Configurable interval for synchronization.
     - `labelPrefix`: The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
     - `resourceGroupFilter`: The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3).
     - `conflictPolicy`: The policy for conflicting tag/label values. ARM tags or node labels can be given priority. ARM tags have priority by default (`arm-precedence`). Another option is to not update tags and raise Kubernetes event (`ignore`) and `node-precedence`. 
 
-Finished project will have sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
+- Finished project will have sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
 
 Sample configuration for options ConfigMap:
 
