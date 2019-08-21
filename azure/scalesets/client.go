@@ -13,6 +13,7 @@ import (
 
 type Service interface {
 	Get(context.Context, string, string) (compute.VirtualMachineScaleSet, error)
+	CreateOrUpdate(context.Context, string, string, compute.VirtualMachineScaleSet) (compute.VirtualMachineScaleSet, error)
 }
 
 type Client struct {
@@ -39,5 +40,14 @@ func (c *Client) Get(ctx context.Context, name string) (*Spec, error) {
 		return nil, err
 	}
 
-	return &Spec{id}, nil
+	return &Spec{&id}, nil
+}
+
+func (c *Client) Update(ctx context.Context, name string, spec *Spec) error {
+	result, err := c.internal.CreateOrUpdate(ctx, c.group, name, *spec.internal)
+	if err != nil {
+		return err
+	}
+	spec.internal = &result
+	return nil
 }

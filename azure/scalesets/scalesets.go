@@ -11,32 +11,36 @@ import (
 type SpecOption func(*Spec) *Spec
 
 type Spec struct {
-	compute.VirtualMachineScaleSet
+	internal *compute.VirtualMachineScaleSet
+}
+
+func (o *Spec) Spec() *compute.VirtualMachineScaleSet {
+	return o.internal
 }
 
 func Name(name string) SpecOption {
 	return func(o *Spec) *Spec {
-		o.Name = &name
+		o.internal.Name = &name
 		return o
 	}
 }
 
 func Location(location string) SpecOption {
 	return func(o *Spec) *Spec {
-		o.Location = &location
+		o.internal.Location = &location
 		return o
 	}
 }
 
 func Prefix(namePrefix string) SpecOption {
 	return func(o *Spec) *Spec {
-		o.VirtualMachineScaleSetProperties.VirtualMachineProfile.OsProfile.ComputerNamePrefix = &namePrefix
+		o.internal.VirtualMachineScaleSetProperties.VirtualMachineProfile.OsProfile.ComputerNamePrefix = &namePrefix
 		return o
 	}
 }
 
 func defaultSpec() *Spec {
-	return &Spec{compute.VirtualMachineScaleSet{
+	return &Spec{&compute.VirtualMachineScaleSet{
 		Sku: &compute.Sku{},
 		Identity: &compute.VirtualMachineScaleSetIdentity{
 			UserAssignedIdentities: map[string]*compute.VirtualMachineScaleSetIdentityUserAssignedIdentitiesValue{},

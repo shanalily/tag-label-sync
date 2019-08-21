@@ -1,7 +1,0 @@
-apiVersion: tag-label-sync.io/api/v1
-kind: ReplicaSet 
-metadata:
-    name: tag-label-sync
-    namespace:
-spec:
-    replicas: 2
