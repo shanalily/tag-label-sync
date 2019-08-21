@@ -19,17 +19,22 @@ Their motivation is billing organization, housekeeping and overall resource trac
 
 Default settings will have one way synchronization with VMSS tags as node labels.
 
-1. The controller runs as a deployment with 2 replicas. Leader election is enabled.
-2. The controller can be run with one of the following authentication methods:
+The controller runs as a deployment with 2 replicas. Leader election is enabled.
+
+The controller can be run with one of the following authentication methods:
     - Service Principals.
     - User Assigned Identity via "Pod Identity".
-3. Configurable options include:
-    - `syncDirection`: Direction of synchronization.
+
+Configurations can be specified in a Kubernetes ConfigMap. Configurable options include:
+    - `syncDirection`: Direction of synchronization. Default is `arm-to-node`. Other options are `two-way` and `node-to-arm`.
     - `interval`: Configurable interval for synchronization.
     - `labelPrefix`: The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
     - `resourceGroupFilter`: The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3).
-    - `conflictPolicy`: The policy for conflicting tag/label values. ARM tags or node labels can be given priority. ARM tags have priority by default. Another option is to ignore.
-4. Sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
+    - `conflictPolicy`: The policy for conflicting tag/label values. ARM tags or node labels can be given priority. ARM tags have priority by default (`arm-precedence`). Another option is to not update tags and raise Kubernetes event (`ignore`) and `node-precedence`. 
+
+Finished project will have sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
+
+Sample configuration for options ConfigMap:
 
 ```
 apiVersion: v1
@@ -45,9 +50,9 @@ data:
     resourceGroupFilter: "none"
 ```
 
-### Psuedo Code
+### Pseudo Code
 
-1. For each VM/VMSS and node:
+For each VM/VMSS and node:
     - For any tag that exists on the VM/VMSS but does not exist as a label on the node, the label will be created, (and vice versa with labels and tags, if two-way sync is enabled).
     - If there is a conflict where a tag and label exist with the same name and a different value,
       the default action is that nothing will be done to resolve the conflict and the conflict will raise a Kubernetes
