@@ -29,7 +29,7 @@ Their motivation is billing organization, housekeeping and overall resource trac
     - `syncDirection`: Direction of synchronization. Default is `arm-to-node`. Other options are `two-way` and `node-to-arm`.
     - `interval`: Configurable interval for synchronization.
     - `labelPrefix`: The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
-    - `resourceGroupFilter`: The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3).
+    - `resourceGroupFilter`: The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3). Default is `none` for no filter. Otherwise, use name of resource group.
     - `conflictPolicy`: The policy for conflicting tag/label values. ARM tags or node labels can be given priority. ARM tags have priority by default (`arm-precedence`). Another option is to not update tags and raise Kubernetes event (`ignore`) and `node-precedence`. 
 
 - Finished project will have sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
