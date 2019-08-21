@@ -17,19 +17,33 @@ Their motivation is billing organization, housekeeping and overall resource trac
 
 ### Kubernetes Configuration
 
-Default settings will have two-way synchronization with VMSS tags and node labels.
+Default settings will have one way synchronization with VMSS tags as node labels.
 
 1. The controller runs as a deployment with 2 replicas. Leader election is enabled.
 2. The controller can be run with one of the following authentication methods:
     - Service Principals.
     - User Assigned Identity via "Pod Identity".
-3. The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3).
-4. Configurable options include:
-    - Switching to one-way synchronization.
-    - The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
-    - The policy for conflicting tag/label values. VM/VMSS tags or node labels can be given priority.
+3. Configurable options include:
+    - Direction of synchronization.
     - Configurable interval for synchronization.
-5. Sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
+    - The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
+    The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3).
+    - The policy for conflicting tag/label values. ARM tags or node labels can be given priority. ARM tags have priority by default. Another option is to ignore.
+4. Sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
+
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: tag-label-sync
+    namespace: default
+data:
+    syncDirection: "arm-to-node"
+    interval: "1"
+    labelPrefix: "azure.tags"
+    conflictPolicy: "arm-precedence"
+    resourceGroupFilter: "none"
+```
 
 ### Psuedo Code
 
