@@ -24,11 +24,11 @@ Default settings will have one way synchronization with VMSS tags as node labels
     - Service Principals.
     - User Assigned Identity via "Pod Identity".
 3. Configurable options include:
-    - Direction of synchronization.
-    - Configurable interval for synchronization.
-    - The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
-    The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3).
-    - The policy for conflicting tag/label values. ARM tags or node labels can be given priority. ARM tags have priority by default. Another option is to ignore.
+    - `syncDirection`: Direction of synchronization.
+    - `interval`: Configurable interval for synchronization.
+    - `labelPrefix`: The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
+    - `resourceGroupFilter`: The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3).
+    - `conflictPolicy`: The policy for conflicting tag/label values. ARM tags or node labels can be given priority. ARM tags have priority by default. Another option is to ignore.
 4. Sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
 
 ```
