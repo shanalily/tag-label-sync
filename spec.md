@@ -52,24 +52,26 @@ data:
 
 ### Pseudo Code
 
-- For each VM/VMSS and node:
-    - For any tag that exists on the VM/VMSS but does not exist as a label on the node, the label will be created, (and vice versa with labels and tags, if two-way sync is enabled).
-    - If there is a conflict where a tag and label exist with the same name and a different value,
+For each VM/VMSS and node:
+- For any tag that exists on the VM/VMSS but does not exist as a label on the node, the label will be created, (and vice versa with labels and tags, if two-way sync is enabled).
+- If there is a conflict where a tag and label exist with the same name and a different value,
       the default action is that nothing will be done to resolve the conflict and the conflict will raise a Kubernetes
       event.
-    - ARM tags will be added as node labels with configurable prefix, and a default prefix of `azure.tags`, with the form 
+- ARM tags will be added as node labels with configurable prefix, and a default prefix of `azure.tags`, with the form 
     `azure.tags/<tag-name>/<tag-value>`. This default prefix is to encourage the use of a prefix.
-    - Node tags may not follow Azure tag name conventions (such as "kubernetes.io/os=linux" which contains '/'),
+- Node tags may not follow Azure tag name conventions (such as "kubernetes.io/os=linux" which contains '/'),
     so in that case...
 
 ## Implementation Challenges
 
 - Currently, we need to wait for nodes to be ready to be able to run the controller and access VM/VMSS tags. This is not ideal.
 - Cluster updates should not delete tags and labels.
+- Differences in tag and label limitations. A max tag limit exists (50 on most Azure resources) as well as a max tag name and value length. Also, different character restrictions.
 
 ## Possible Extensions
 
-- Consider syncing node taints as ARM tags.
+- Annotations
+- Taints
 
 ## Questions
 
