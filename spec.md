@@ -66,7 +66,7 @@ For each VM/VMSS and node:
 
 - Currently, we need to wait for nodes to be ready to be able to run the controller and access VM/VMSS tags. This is not ideal.
 - Cluster updates should not delete tags and labels.
-- Differences in tag and label limitations. A max tag limit exists (50 on most Azure resources). Also, different character and string length restrictions.
+- Differences in tag and label limitations. A max tag limit exists (50 on most Azure resources). Also, different character and string length restrictions. Modifications to either tags or labels to fit the other standard must be consistent.
 
 ## Possible Extensions
 
