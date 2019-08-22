@@ -127,12 +127,11 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 				log.V(1).Info("applying tags to nodes", "tagName", tagName, "tagVal", *tagVal)
 
 				node.Labels[convertTagNameToValidLabelName(tagName, configOptions)] = *tagVal
-				err := r.Update(context.TODO(), node) // should this be a patch?
-				if err != nil {
+				if err := r.Update(context.TODO(), node); err != nil { // should this be a patch?
 					return err
 				}
 			} else if labelVal != *tagVal {
-				// TODO
+				log.V(0).Info("updating", "using policy", configOptions.ConflictPolicy)
 				switch configOptions.ConflictPolicy {
 				case ARMPrecedence:
 					// set label anyway
@@ -145,11 +144,12 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 					log.V(0).Info("name->value conflict found", "label value", labelVal, "tag value", *tagVal)
 				case Ignore:
 					// raise k8s event
+					// r.recorder.Event(node, "Warning", "ConflictingTagLabelValues",
+					// 	fmt.Sprintf("ARM tag was not applied to node because a different value for '%s' already exists (%s != %s).", tagName, *tagVal, labelVal))
 					log.V(0).Info("name->value conflict found, leaving unchanged", "label value", labelVal, "tag value", *tagVal)
 				default:
 					return errors.New("unrecognized conflict policy")
 				}
-				return errors.New(fmt.Sprintf("Label already exists on node %s but with different value", node.Name))
 			}
 		}
 	}

@@ -60,11 +60,14 @@ func NewConfigOptions(configMap corev1.ConfigMap) (ConfigOptions, error) {
 		configOptions.LabelPrefix = DefaultLabelPrefix
 	}
 
+	// also validate prefix?
 	if configOptions.TagPrefix == "" {
 		configOptions.TagPrefix = DefaultTagPrefix
 	}
 
-	if configOptions.ConflictPolicy == "" {
+	if configOptions.ConflictPolicy != Ignore &&
+		configOptions.ConflictPolicy != ARMPrecedence &&
+		configOptions.ConflictPolicy != NodePrecedence {
 		configOptions.ConflictPolicy = ARMPrecedence
 	}
 
