@@ -6,6 +6,6 @@ metadata:
 data:
     labelPrefix: "azure.tags"
     conflictPolicy: "ignore"
-    syncDirection: "yes"
+    syncDirection: "two-way"
     interval: "2" 
     resourceGroup: "shoshanargwestus2"

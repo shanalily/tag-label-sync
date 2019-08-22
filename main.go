@@ -62,9 +62,10 @@ func main() {
 	}
 
 	if err = (&controller.ReconcileTagLabelSync{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers"),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Log:      ctrl.Log.WithName("controllers"),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("tag-label-sync"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller")
 		os.Exit(1)

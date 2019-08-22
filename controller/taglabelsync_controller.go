@@ -28,7 +28,7 @@ type ReconcileTagLabelSync struct {
 	client.Client
 	Log      logr.Logger
 	Scheme   *runtime.Scheme
-	recorder record.EventRecorder
+	Recorder record.EventRecorder
 	ctx      context.Context
 }
 
@@ -41,7 +41,7 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
 	r.ctx = ctx
 
-	configMap := corev1.ConfigMap{}
+	var configMap corev1.ConfigMap
 	var configOptions ConfigOptions
 	optionsNamespacedName := types.NamespacedName{Name: "tag-label-sync", Namespace: "default"} // is this okay
 	if err := r.Get(ctx, optionsNamespacedName, &configMap); err != nil {
@@ -54,10 +54,6 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 			log.Error(err, "failed to load options from config file")
 			return ctrl.Result{}, err
 		}
-		// log.V(1).Info("configMap", "label prefix value", configOptions.LabelPrefix)
-		// log.V(1).Info("configMap", "sync direction", configOptions.SyncDirection)
-		// log.V(1).Info("configMap", "interval", configOptions.Interval)
-		// log.V(1).Info("configMap", "resource group", configOptions.ResourceGroupFilter)
 	}
 
 	var node corev1.Node
@@ -121,13 +117,13 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 	if configOptions.SyncDirection == TwoWay || configOptions.SyncDirection == ARMToNode {
 		for tagName, tagVal := range vmss.Spec().Tags {
 			// what if key exists but different value? what takes priority? currently just going to ignore and only add tags that don't exist
-			labelVal, ok := node.Labels[convertTagNameToValidLabelName(tagName, configOptions)]
+			labelVal, ok := node.Labels[ConvertTagNameToValidLabelName(tagName, configOptions)]
 			if !ok {
 				// add tag as label
 				log.V(1).Info("applying tags to nodes", "tagName", tagName, "tagVal", *tagVal)
 
-				node.Labels[convertTagNameToValidLabelName(tagName, configOptions)] = *tagVal
-				if err := r.Update(context.TODO(), node); err != nil { // should this be a patch?
+				node.Labels[ConvertTagNameToValidLabelName(tagName, configOptions)] = *tagVal
+				if err := r.Update(r.ctx, node); err != nil { // should this be a patch?
 					return err
 				}
 			} else if labelVal != *tagVal {
@@ -135,8 +131,8 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 				switch configOptions.ConflictPolicy {
 				case ARMPrecedence:
 					// set label anyway
-					node.Labels[convertTagNameToValidLabelName(tagName, configOptions)] = *tagVal
-					if err := r.Update(context.TODO(), node); err != nil {
+					node.Labels[ConvertTagNameToValidLabelName(tagName, configOptions)] = *tagVal
+					if err := r.Update(r.ctx, node); err != nil {
 						return err
 					}
 				case NodePrecedence:
@@ -144,8 +140,8 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 					log.V(0).Info("name->value conflict found", "label value", labelVal, "tag value", *tagVal)
 				case Ignore:
 					// raise k8s event
-					// r.recorder.Event(node, "Warning", "ConflictingTagLabelValues",
-					// 	fmt.Sprintf("ARM tag was not applied to node because a different value for '%s' already exists (%s != %s).", tagName, *tagVal, labelVal))
+					r.Recorder.Event(node, "Warning", "ConflictingTagLabelValues",
+						fmt.Sprintf("ARM tag was not applied to node because a different value for '%s' already exists (%s != %s).", tagName, *tagVal, labelVal))
 					log.V(0).Info("name->value conflict found, leaving unchanged", "label value", labelVal, "tag value", *tagVal)
 				default:
 					return errors.New("unrecognized conflict policy")
@@ -163,30 +159,44 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 			return nil
 		}
 		for labelName, labelVal := range node.Labels {
-			tagVal, ok := vmss.Spec().Tags[convertLabelNameToValidTagName(labelName, configOptions)]
+			if !ValidTagName(labelName, configOptions) {
+				// I don't think I want to retuern yet
+				// return errors.New(fmt.Sprintf("invalid tag name: %s", labelName))
+				// log.Error(errors.New(fmt.Sprintf("invalid tag name")), fmt.Sprintf("label name: %s", labelName))
+				log.V(0).Info("invalid tag name", "label name", labelName)
+				continue
+			}
+			validTagName := ConvertLabelNameToValidTagName(labelName, configOptions)
+			tagVal, ok := vmss.Spec().Tags[validTagName]
 			if !ok {
 				// add label as tag
 				log.V(1).Info("applying labels to VMSS", "labelVal", labelVal)
 
-				// validTagName := azure.ConvertToValidTagName(labelName)
-				// vmss.Spec().Tags[validTagName] = &labelVal
-				vmss.Spec().Tags[convertLabelNameToValidTagName(labelName, configOptions)] = &labelVal
-				if err := vmssClient.Update(context.TODO(), *vmss.Spec().Name, vmss); err != nil {
+				vmss.Spec().Tags[validTagName] = &labelVal
+				if err := vmssClient.Update(r.ctx, *vmss.Spec().Name, vmss); err != nil {
 					// log.Error(err, "failed to update VMSS", "labelName", validTagName, "labelVal", labelVal)
 					log.Error(err, "failed to update VMSS", "labelName", labelName, "labelVal", labelVal)
 				}
-			} else if labelVal != *tagVal {
-				// switch configOptions.ConflictPolicy {
-				// case NodePrecedence:
-				// 	// set tag anyway
-				// case ARMPrecedence:
-				// 	// do nothing
-				// case Ignore:
-				// 	// raise kubernetes event
-				// default:
-				// 	// error
-				// }
-				return errors.New(fmt.Sprintf("Tag already exists on VMSS %s but with different value", *vmss.Spec().Name))
+			} else if *tagVal != labelVal {
+				switch configOptions.ConflictPolicy {
+				case NodePrecedence:
+					// set tag anyway
+					vmss.Spec().Tags[validTagName] = &labelVal
+					if err := vmssClient.Update(r.ctx, *vmss.Spec().Name, vmss); err != nil {
+						// log.Error(err, "failed to update VMSS", "labelName", validTagName, "labelVal", labelVal)
+						log.Error(err, "failed to update VMSS", "labelName", labelName, "labelVal", labelVal)
+					}
+				case ARMPrecedence:
+					// do nothing
+					log.V(0).Info("name->value conflict found", "label value", labelVal, "tag value", *tagVal)
+				case Ignore:
+					// raise kubernetes event
+					r.Recorder.Event(node, "Warning", "ConflictingTagLabelValues",
+						fmt.Sprintf("node label was not applied to VMSS because a different value for '%s' already exists (%s != %s).", labelName, labelVal, *tagVal))
+					log.V(0).Info("name->value conflict found, leaving unchanged", "label value", labelVal, "tag value", *tagVal)
+				default:
+					return errors.New("unrecognized conflict policy")
+				}
 			}
 		}
 	}
