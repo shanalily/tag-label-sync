@@ -14,6 +14,8 @@ export AZURE_CLIENT_SECRET=
 
 ```
 
+For MSI authentication: https://github.com/Azure/aad-pod-identity
+
 Create ConfigMap with configurable options and apply to cluster.
 
 Run `make` to build, then `make run` to run.

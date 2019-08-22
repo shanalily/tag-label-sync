@@ -1,7 +1,0 @@
-apiVersion: taglabel.tag-label-sync.io/v1
-kind: TagLabelSync
-metadata:
-  name: taglabelsync-sample
-spec:
-  # Add fields here
-  foo: bar

@@ -50,6 +50,7 @@ data:
     conflictPolicy: "arm-precedence"
     resourceGroupFilter: "none"
 ```
+Sample configuration for authorization:
 
 ```
 apiVersion: "aadpodidentity.k8s.io/v1"

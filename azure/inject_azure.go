@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/Azure/go-autorest/autorest"
@@ -68,14 +67,6 @@ func injectAuthorizer() (autorest.Authorizer, error) {
 	return provideAuthorizer(config)
 }
 
-func injectKeyvaultAuthorizer() (autorest.Authorizer, error) {
-	config, err := provideConfiguration()
-	if err != nil {
-		return nil, err
-	}
-	return provideKeyvaultAuthorizer(config)
-}
-
 func injectGraphAuthorizer() (autorest.Authorizer, error) {
 	config, err := provideConfiguration()
 	if err != nil {
@@ -85,9 +76,9 @@ func injectGraphAuthorizer() (autorest.Authorizer, error) {
 }
 
 func provideConfiguration() (*authContext, error) {
-	file, err := auth.GetSettingsFromFile()
+	file, err := auth.GetSettingsFromFile() // comes from AZURE_AUTH_LOCATION
 	if err != nil {
-		env, err := auth.GetSettingsFromEnvironment()
+		env, err := auth.GetSettingsFromEnvironment() // comes from env variables
 		if err != nil {
 			return &authContext{}, err
 		}
@@ -135,14 +126,6 @@ func provideResourceAuthorizer(resource string) (autorest.Authorizer, error) {
 		return auth.NewAuthorizerFromEnvironmentWithResource(resource)
 	}
 	return authorizer, nil
-}
-
-func provideKeyvaultAuthorizer(ac *authContext) (autorest.Authorizer, error) {
-	env, err := azure.EnvironmentFromName(ac.AzureCloud)
-	if err != nil {
-		return nil, err
-	}
-	return provideResourceAuthorizer(strings.TrimSuffix(env.KeyVaultEndpoint, "/"))
 }
 
 func getMSICredentials() (auth.ClientCredentialsConfig, error) {
