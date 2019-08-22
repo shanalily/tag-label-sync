@@ -93,7 +93,7 @@ func provideConfiguration() (*authContext, error) {
 		}
 		config, err := env.GetClientCredentials()
 		if err != nil {
-			config, err = getMSICredentials()
+			config, err = getMSICredentials() // do I need to have this be priority?
 			if err != nil {
 				return &authContext{}, err
 			}

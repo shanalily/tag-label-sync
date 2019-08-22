@@ -51,6 +51,18 @@ data:
     resourceGroupFilter: "none"
 ```
 
+```
+apiVersion: "aadpodidentity.k8s.io/v1"
+    kind: AzureIdentity
+    metadata:
+        name: <a-idname> 
+    spec:
+        type: 0
+        ResourceID: /subscriptions/<subid>/resourcegroups/<resource-group>/providers/Microsoft.ManagedIdentity/userAssignedIdentities/<name>
+        ClientID: <clientId>
+```
+Set `type: 0` for user-assigned MSI or `type: 1` for Service Principal.
+
 ### Pseudo Code
 
 For each VM/VMSS and node:

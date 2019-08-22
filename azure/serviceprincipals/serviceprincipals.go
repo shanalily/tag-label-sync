@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/Azure/azure-sdk-for-go/services/graphrbac/1.6/graphrbac"
+
+	"tag-label-sync.io/azure"
 )
 
 type SpecOption func(*Spec) *Spec
@@ -47,11 +49,11 @@ func (c *Client) Get(ctx context.Context, appID string) (*Spec, error) {
 }
 
 func newClient(tenantID string) (*client, error) {
-	sp, err := NewServicePrincipalClient(tenantID)
+	sp, err := azure.NewServicePrincipalClient(tenantID)
 	if err != nil {
 		return nil, err
 	}
-	app, err := NewApplicationClient(tenantID)
+	app, err := azure.NewApplicationClient(tenantID)
 	if err != nil {
 		return nil, err
 	}

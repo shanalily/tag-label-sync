@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+const (
+	maxTagNameLen     int    = 512
+	maxTagValLen      int    = 256
+	maxNumTags        int    = 50
+	invalidTagChars   string = "<>%&\\?/"
+	maxLabelNameLen   int    = 63
+	maxLabelPrefixLen int    = 253
+	maxLabelValLen    int    = 63
+)
+
 func ValidTagName(labelName string, configOptions ConfigOptions) bool {
 	return validTagName(labelWithoutPrefix(labelName, configOptions.LabelPrefix))
 }
@@ -13,13 +23,13 @@ func ConvertTagNameToValidLabelName(tagName string, configOptions ConfigOptions)
 	// lstrip configOptions.TagPrefix if there
 	// don't forget to get rid of '.' after 'node.labels'... are there prefixes here?
 	result := tagName
-	if strings.HasPrefix(tagName, configOptions.TagPrefix) {
-		result = strings.TrimPrefix(tagName, configOptions.TagPrefix)
+	if strings.HasPrefix(tagName, fmt.Sprintf("%s", configOptions.TagPrefix)) {
+		result = strings.TrimPrefix(tagName, fmt.Sprintf("%s", configOptions.TagPrefix))
 	}
 
 	// truncate name segment to 63 characters or less
-	if len(result) > 63 {
-		result = result[:64]
+	if len(result) > maxLabelNameLen {
+		result = result[:maxLabelNameLen+1]
 	}
 
 	// must begin and end with alphanumeric character with -,_,. and alphanumerics in between
@@ -47,7 +57,12 @@ func ConvertLabelNameToValidTagName(labelName string, configOptions ConfigOption
 	return result
 }
 
-func ConvertTagValToValidLabelVal() {
+func ConvertTagValToValidLabelVal(tagVal string) string {
+	result := tagVal
+	if len(result) > maxLabelValLen {
+		result = result[:maxLabelValLen+1]
+	}
+	return result
 }
 
 func ConvertLabelValToValidTagVal() {
@@ -74,8 +89,7 @@ func tagWithoutPrefix(tagName, prefix string) string {
 }
 
 func validTagName(labelName string) bool {
-	invalidChars := "<>%&\\?/"
-	if strings.ContainsAny(labelName, invalidChars) {
+	if strings.ContainsAny(labelName, invalidTagChars) {
 		return false
 	}
 	return true

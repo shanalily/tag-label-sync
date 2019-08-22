@@ -137,7 +137,7 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 					}
 				case NodePrecedence:
 					// do nothing
-					log.V(0).Info("name->value conflict found", "label value", labelVal, "tag value", *tagVal)
+					log.V(0).Info("name->value conflict found", "node label value", labelVal, "ARM tag value", *tagVal)
 				case Ignore:
 					// raise k8s event
 					r.Recorder.Event(node, "Warning", "ConflictingTagLabelValues",
@@ -153,7 +153,7 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 	// assign all labels on Node to VMSS, if not already there
 
 	if configOptions.SyncDirection == TwoWay || configOptions.SyncDirection == NodeToARM {
-		if len(vmss.Spec().Tags) > 50 {
+		if len(vmss.Spec().Tags) > maxNumTags {
 			// error
 			log.V(1).Info("can't add any more tags", "number of tags", len(vmss.Spec().Tags))
 			return nil
@@ -170,7 +170,7 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 			tagVal, ok := vmss.Spec().Tags[validTagName]
 			if !ok {
 				// add label as tag
-				log.V(1).Info("applying labels to VMSS", "labelVal", labelVal)
+				log.V(1).Info("applying labels to VMSS", "labelVal", labelVal, "tagVal", tagVal)
 
 				vmss.Spec().Tags[validTagName] = &labelVal
 				if err := vmssClient.Update(r.ctx, *vmss.Spec().Name, vmss); err != nil {
@@ -188,7 +188,7 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 					}
 				case ARMPrecedence:
 					// do nothing
-					log.V(0).Info("name->value conflict found", "label value", labelVal, "tag value", *tagVal)
+					log.V(0).Info("name->value conflict found", "node label value", labelVal, "ARM tag value", *tagVal)
 				case Ignore:
 					// raise kubernetes event
 					r.Recorder.Event(node, "Warning", "ConflictingTagLabelValues",
