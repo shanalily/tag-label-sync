@@ -12,6 +12,8 @@ import (
 
 type Service interface {
 	Get(context.Context, string, string) (compute.VirtualMachine, error)
+	// I need to implment update method for client
+	CreateOrUpdate(context.Context, string, string, compute.VirtualMachine) (compute.VirtualMachine, error)
 }
 
 type Client struct {
@@ -41,5 +43,14 @@ func (c *Client) Get(ctx context.Context, name string) (*Spec, error) {
 		return nil, err
 	}
 
-	return &Spec{internal: vm}, nil
+	return &Spec{internal: &vm}, nil
+}
+
+func (c *Client) Update(ctx context.Context, name string, spec *Spec) error {
+	result, err := c.internal.CreateOrUpdate(ctx, c.group, name, *spec.internal)
+	if err != nil {
+		return err
+	}
+	spec.internal = &result
+	return nil
 }

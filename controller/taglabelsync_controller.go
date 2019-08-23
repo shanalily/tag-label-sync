@@ -32,6 +32,19 @@ type ReconcileTagLabelSync struct {
 	ctx      context.Context
 }
 
+type ComputeResourceClient interface {
+	// how can I make an interface for Spec that allows me to use VM and VMSS with the same function?
+	NewClient(subscriptionID string, resourceName string)
+}
+
+type VirtualMachineClient struct {
+	vms.Client
+}
+
+type VirtualMachineScaleSetClient struct {
+	scalesets.Client
+}
+
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=nodes/status,verbs=get
@@ -74,13 +87,10 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 		if err != nil {
 			log.Error(err, "failed to create VMSS client")
 		}
-		vmss, err := vmssClient.Get(ctx, provider.ResourceName)
-		if err != nil {
-			log.Error(err, "failed to get VMSS")
-		}
+		// have vmssClient wrapped in something that I pass to apply?
 
 		// Add VMSS tags to node
-		if err := r.applyVMSSTagsToNodes(request, vmss, &node, vmssClient, configOptions); err != nil {
+		if err := r.applyVMSSTagsToNodes(request, vmssClient, provider.ResourceName, &node, configOptions); err != nil {
 			log.Error(err, "failed to apply tags to nodes")
 			return reconcile.Result{}, err
 		}
@@ -90,13 +100,9 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 		if err != nil {
 			log.Error(err, "failed to create VM client")
 		}
-		vm, err := vmClient.Get(ctx, provider.ResourceName)
-		if err != nil {
-			log.Error(err, "failed to get VM")
-		}
 
 		// Add VM tags to node
-		if err := r.applyVMTagsToNodes(request, vm, &node, vmClient, configOptions); err != nil {
+		if err := r.applyVMTagsToNodes(request, vmClient, provider.ResourceName, &node, configOptions); err != nil {
 			log.Error(err, "failed to apply tags to nodes")
 		}
 	default:
@@ -107,10 +113,15 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 }
 
 // pass VMSS -> tags info and assign to nodes on VMs (unless node already has label)
-func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, vmss *scalesets.Spec, node *corev1.Node, vmssClient *scalesets.Client, configOptions ConfigOptions) error {
+func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, vmssClient *scalesets.Client, resourceName string, node *corev1.Node, configOptions ConfigOptions) error {
 	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
 	// each VMSS may have multiple nodes, but I think each nodes is only in one VMSS
 	// whats the fastest way to check if Node already has label? benefit of map
+
+	vmss, err := vmssClient.Get(r.ctx, resourceName)
+	if err != nil {
+		log.Error(err, "failed to get VMSS")
+	}
 
 	// assign all tags on VMSS to Node, if not already there
 	log.V(0).Info("configOptions", "sync direction", configOptions.SyncDirection)
@@ -204,8 +215,13 @@ func (r *ReconcileTagLabelSync) applyVMSSTagsToNodes(request reconcile.Request, 
 	return nil
 }
 
-func (r *ReconcileTagLabelSync) applyVMTagsToNodes(request reconcile.Request, vm *vms.Spec, node *corev1.Node, vmClient *vms.Client, configOptions ConfigOptions) error {
+func (r *ReconcileTagLabelSync) applyVMTagsToNodes(request reconcile.Request, vmClient *vms.Client, resourceName string, node *corev1.Node, configOptions ConfigOptions) error {
 	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
+
+	vm, err := vmClient.Get(r.ctx, resourceName)
+	if err != nil {
+		log.Error(err, "failed to get VM")
+	}
 
 	for tagName, tagVal := range vm.Spec().Tags {
 		labelVal, ok := node.Labels[tagName]

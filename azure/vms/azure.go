@@ -26,3 +26,17 @@ func newClient(subID string) (*client, error) {
 func (c *client) Get(ctx context.Context, group, name string) (compute.VirtualMachine, error) {
 	return c.VirtualMachinesClient.Get(ctx, group, name, compute.InstanceView)
 }
+
+func (c *client) CreateOrUpdate(ctx context.Context, group, name string, sg compute.VirtualMachine) (compute.VirtualMachine, error) {
+	f, err := c.VirtualMachinesClient.CreateOrUpdate(ctx, group, name, sg)
+	if err != nil {
+		return compute.VirtualMachine{}, err
+	}
+
+	err = f.WaitForCompletionRef(ctx, c.Client)
+	if err != nil {
+		return compute.VirtualMachine{}, err
+	}
+
+	return f.Result(c.VirtualMachinesClient)
+}

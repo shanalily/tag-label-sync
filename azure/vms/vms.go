@@ -10,14 +10,14 @@ import (
 type SpecOption func(*Spec) *Spec
 
 type Spec struct {
-	internal compute.VirtualMachine
+	internal *compute.VirtualMachine
 }
 
-func (spec *Spec) Spec() compute.VirtualMachine {
+func (spec *Spec) Spec() *compute.VirtualMachine {
 	return spec.internal
 }
 
 func defaultSpec() *Spec {
 	// shouild I fill this out?
-	return &Spec{compute.VirtualMachine{}}
+	return &Spec{&compute.VirtualMachine{}}
 }
