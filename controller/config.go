@@ -2,7 +2,7 @@ package controller
 
 import (
 	"encoding/json"
-	"strconv"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -50,9 +50,10 @@ func NewConfigOptions(configMap corev1.ConfigMap) (ConfigOptions, error) {
 		configOptions.SyncDirection = ARMToNode
 	}
 
-	if _, err := strconv.Atoi(configOptions.Interval); err != nil {
+	// if _, err := strconv.Atoi(configOptions.Interval); err != nil {
+	if _, err := time.ParseDuration(configOptions.Interval); err != nil {
 		// error?
-		configOptions.Interval = "1"
+		configOptions.Interval = "10h"
 	}
 
 	// I need a different way to check if not set b/c I need to allow for empty prefixes

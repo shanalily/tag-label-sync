@@ -19,3 +19,7 @@ For MSI authentication: https://github.com/Azure/aad-pod-identity
 Create ConfigMap with configurable options and apply to cluster.
 
 Run `make` to build, then `make run` to run.
+
+
+The deployment file is config/manager/manager.yaml. You can change sync-period to configure
+min interval between reconciliation.
