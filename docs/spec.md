@@ -33,7 +33,7 @@ Their motivation is billing organization, housekeeping and overall resource trac
 
 Sample configuration for options ConfigMap:
 
-```
+``` yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -48,7 +48,7 @@ data:
 
 Sample configuration for authorization:
 
-```
+``` yaml
 apiVersion: "aadpodidentity.k8s.io/v1"
     kind: AzureIdentity
     metadata:
@@ -61,7 +61,7 @@ apiVersion: "aadpodidentity.k8s.io/v1"
 Set `type: 0` for user-assigned MSI or `type: 1` for Service Principal.
 
 Sample configuration for config/manger/manager.yaml:
-```
+``` yaml
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -103,6 +103,14 @@ spec:
                         memory: 20Mi
             terminationGracePeriodSeconds: 10
 ```
+
+After creating and/or editing configuration files, apply config map to cluster.
+
+```kubectl apply ...```
+
+Apply identity (more on this later).
+
+Apply controller by running `make` and then `make run`.
 
 ### Pseudo Code
 
