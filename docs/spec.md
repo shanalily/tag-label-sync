@@ -64,45 +64,45 @@ Set `type: 0` for user-assigned MSI or `type: 1` for Service Principal.
 Sample configuration for config/manger/manager.yaml:
 ```
 apiVersion: v1
-    2 kind: Namespace
-    3 metadata:
-    4   labels:
-    5     control-plane: controller-manager
-    6   name: system
-    7 ---
-    8 apiVersion: apps/v1
-    9 kind: Deployment
-   10 metadata:
-   11   name: controller-manager
-   12   namespace: system
-   13   labels:
-   14     control-plane: controller-manager
-   15 spec:
-   16   selector:
-   17     matchLabels:
-   18       control-plane: controller-manager
-   19   replicas: 2
-   20   template:
-   21     metadata:
-   22       labels:
-   23         control-plane: controller-manager
-   24     spec:
-   25       containers:
-   26       - command:
-   27         - /manager
-   28         args:
-   29         - --enable-leader-election
-   30         - --sync-period 10h
-   31         image: controller:latest
-   32         name: manager
-   33         resources:
-   34           limits:
-   35             cpu: 100m
-   36             memory: 30Mi
-   37           requests:
-   38             cpu: 100m
-   39             memory: 20Mi
-   40       terminationGracePeriodSeconds: 10
+kind: Namespace
+metadata:
+    labels:
+        control-plane: controller-manager
+    name: system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: controller-manager
+    namespace: system
+    labels:
+        control-plane: controller-manager
+spec:
+    selector:
+        matchLabels:
+            control-plane: controller-manager
+        replicas: 2
+        template:
+            metadata:
+                labels:
+                    control-plane: controller-manager
+            spec:
+                containers:
+                - command:
+                    - /manager
+                    args:
+                    - --enable-leader-election
+                    - --sync-period 10h
+                    image: controller:latest
+                    name: manager
+                    resources:
+                        limits:
+                            cpu: 100m
+                            memory: 30Mi
+                    requests:
+                        cpu: 100m
+                        memory: 20Mi
+            terminationGracePeriodSeconds: 10
 ```
 
 ### Pseudo Code
