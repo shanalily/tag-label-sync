@@ -19,20 +19,17 @@ Their motivation is billing organization, housekeeping and overall resource trac
 
 - Default settings will have one way synchronization with VM/VMSS tags as node labels.
 
-- The controller runs as a deployment with 2 replicas. Leader election is enabled.
-
 - The controller can be run with one of the following authentication methods:
     - Service Principals.
     - User Assigned Identity via "Pod Identity".
-
 - Configurations can be specified in a Kubernetes ConfigMap. Configurable options include:
     - `syncDirection`: Direction of synchronization. Default is `arm-to-node`. Other options are `two-way` and `node-to-arm`. <!--    - `interval`: Configurable interval for synchronization. -->
     - `labelPrefix`: The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
     - `tagPrefix`: The ARM tag prefix (for node-to-ARM and two-way sync), with a default of `k8s.labels`. An empty prefix will be permitted.
     - `resourceGroupFilter`: The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3). Default is `none` for no filter. Otherwise, use name of resource group.
     - `conflictPolicy`: The policy for conflicting tag/label values. ARM tags or node labels can be given priority. ARM tags have priority by default (`arm-precedence`). Another option is to not update tags and raise Kubernetes event (`ignore`) and `node-precedence`. 
-- A minimum sync period can be set in config/manager/manager.yaml. Give time as string with integer and unit suffixes ns, us, ms, s, m, or h (ex: 2h30m, 100ns). Default is 10 hours, as in kubebuilder.
-
+- The controller runs as a deployment with 2 replicas. Leader election is enabled.
+- A minimum sync period can be set in config/manager/manager.yaml. Give time as string with integer and unit suffixes ns, us, ms, s, m, or h (ex: "2h30m", "100ns"). Default is 10 hours, as in kubebuilder.
 - Finished project will have sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
 
 Sample configuration for options ConfigMap:
