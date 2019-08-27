@@ -108,9 +108,9 @@ After creating and/or editing configuration files, apply config map to cluster.
 
 ```kubectl apply -f options-configmap.yaml```
 
-Apply identity (more on this later).
+Apply identity (more on this later, but for now look at the [Azure/aad-pod-identity repository](https://github.com/Azure/aad-pod-identity)).
 
-Apply controller by running `make` and then `make run`.
+Compile and run the controller by running `make` and then `make run`.
 
 ### Pseudo Code
 
