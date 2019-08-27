@@ -31,7 +31,7 @@ Their motivation is billing organization, housekeeping and overall resource trac
 - A minimum sync period can be set in config/manager/manager.yaml. Give time as string with integer and unit suffixes ns, us, ms, s, m, or h (ex: "2h30m", "100ns"). Default is 10 hours, as in kubebuilder.
 - Finished project will have sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
 
-Sample configuration for options ConfigMap:
+Sample configuration for options ConfigMap (let's call it `options-configmap.yaml`):
 
 ``` yaml
 apiVersion: v1
@@ -106,7 +106,7 @@ spec:
 
 After creating and/or editing configuration files, apply config map to cluster.
 
-```kubectl apply ...```
+```kubectl apply -f options-configmap.yaml```
 
 Apply identity (more on this later).
 
