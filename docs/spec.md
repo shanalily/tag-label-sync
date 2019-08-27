@@ -60,7 +60,7 @@ apiVersion: "aadpodidentity.k8s.io/v1"
 ```
 Set `type: 0` for user-assigned MSI or `type: 1` for Service Principal.
 
-Sample configuration for config/manger/manager.yaml:
+Sample configuration for config/manager/manager.yaml:
 ``` yaml
 apiVersion: v1
 kind: Namespace
