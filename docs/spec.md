@@ -26,12 +26,12 @@ Their motivation is billing organization, housekeeping and overall resource trac
     - User Assigned Identity via "Pod Identity".
 
 - Configurations can be specified in a Kubernetes ConfigMap. Configurable options include:
-    - `syncDirection`: Direction of synchronization. Default is `arm-to-node`. Other options are `two-way` and `node-to-arm`.
-    - `interval`: Configurable interval for synchronization.
+    - `syncDirection`: Direction of synchronization. Default is `arm-to-node`. Other options are `two-way` and `node-to-arm`. <!--    - `interval`: Configurable interval for synchronization. -->
     - `labelPrefix`: The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
     - `tagPrefix`: The ARM tag prefix (for node-to-ARM and two-way sync), with a default of `k8s.labels`. An empty prefix will be permitted.
     - `resourceGroupFilter`: The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3). Default is `none` for no filter. Otherwise, use name of resource group.
     - `conflictPolicy`: The policy for conflicting tag/label values. ARM tags or node labels can be given priority. ARM tags have priority by default (`arm-precedence`). Another option is to not update tags and raise Kubernetes event (`ignore`) and `node-precedence`. 
+- A minimum sync period can be set in config/manager/manager.yaml. Give time as string with integer and unit suffixes ns, us, ms, s, m, or h (ex: 2h30m, 100ns). Default is 10 hours, as in kubebuilder.
 
 - Finished project will have sample YAML files for deployment, the options configmap, and managed identity will be provided with instructions on what to edit before applying to a cluster.
 
@@ -45,11 +45,11 @@ metadata:
     namespace: default
 data:
     syncDirection: "arm-to-node"
-    interval: "1"
     labelPrefix: "azure.tags"
     conflictPolicy: "arm-precedence"
     resourceGroupFilter: "none"
 ```
+
 Sample configuration for authorization:
 
 ```
@@ -63,6 +63,50 @@ apiVersion: "aadpodidentity.k8s.io/v1"
         ClientID: <clientId>
 ```
 Set `type: 0` for user-assigned MSI or `type: 1` for Service Principal.
+
+Sample configuration for config/manger/manager.yaml:
+```
+apiVersion: v1
+    2 kind: Namespace
+    3 metadata:
+    4   labels:
+    5     control-plane: controller-manager
+    6   name: system
+    7 ---
+    8 apiVersion: apps/v1
+    9 kind: Deployment
+   10 metadata:
+   11   name: controller-manager
+   12   namespace: system
+   13   labels:
+   14     control-plane: controller-manager
+   15 spec:
+   16   selector:
+   17     matchLabels:
+   18       control-plane: controller-manager
+   19   replicas: 2
+   20   template:
+   21     metadata:
+   22       labels:
+   23         control-plane: controller-manager
+   24     spec:
+   25       containers:
+   26       - command:
+   27         - /manager
+   28         args:
+   29         - --enable-leader-election
+   30         - --sync-period 10h
+   31         image: controller:latest
+   32         name: manager
+   33         resources:
+   34           limits:
+   35             cpu: 100m
+   36             memory: 30Mi
+   37           requests:
+   38             cpu: 100m
+   39             memory: 20Mi
+   40       terminationGracePeriodSeconds: 10
+```
 
 ### Pseudo Code
 
