@@ -24,8 +24,7 @@ Their motivation is billing organization, housekeeping and overall resource trac
     - User Assigned Identity via "Pod Identity".
 - Configurations can be specified in a Kubernetes ConfigMap. Configurable options include:
     - `syncDirection`: Direction of synchronization. Default is `arm-to-node`. Other options are `two-way` and `node-to-arm`. <!--    - `interval`: Configurable interval for synchronization. -->
-    - `labelPrefix`: The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted.
-    - `tagPrefix`: The ARM tag prefix (for node-to-ARM and two-way sync), with a default of `k8s.labels`. An empty prefix will be permitted.
+    - `labelPrefix`: The node label prefix, with a default of `azure.tags`. An empty prefix will be permitted. <!-- - `tagPrefix`: The ARM tag prefix (for node-to-ARM and two-way sync), with a default of `k8s.labels`. An empty prefix will be permitted. -->
     - `resourceGroupFilter`: The controller can be limited to run on only nodes within a resource group filter (i.e. nodes that exist in RG1, RG2, RG3). Default is `none` for no filter. Otherwise, use name of resource group.
     - `conflictPolicy`: The policy for conflicting tag/label values. ARM tags or node labels can be given priority. ARM tags have priority by default (`arm-precedence`). Another option is to not update tags and raise Kubernetes event (`ignore`) and `node-precedence`. 
 - The controller runs as a deployment with 2 replicas. Leader election is enabled.
@@ -115,7 +114,7 @@ For each VM/VMSS and node:
 - ARM tags will be added as node labels with configurable prefix, and a default prefix of `azure.tags`, with the form 
     `azure.tags/<tag-name>:<tag-value>`. This default prefix is to encourage the use of a prefix.
 - Node tags may not follow Azure tag name conventions (such as "kubernetes.io/os=linux" which contains '/'),
-    so in that case...
+    so in that case... TBD
 
 ## Implementation Challenges
 
