@@ -32,7 +32,7 @@ type ReconcileTagLabelSync struct {
 	ctx      context.Context
 }
 
-type ComputeResourceClient interface {
+type ComputeResource interface {
 	// how can I make an interface for Spec that allows me to use VM and VMSS with the same function?
 	// how am I supposed to do this when different clients are returned?
 	Get(ctx context.Context, name string) error
@@ -41,21 +41,24 @@ type ComputeResourceClient interface {
 	SetTag(name string, value *string)
 }
 
-type VirtualMachineClient struct {
+type VirtualMachine struct {
 	client *vms.Client
 	vm     *vms.Spec
 }
 
-// basically no point?
-// func NewClient(subscriptionID, resourceName string) (*vms.Client, error) {
-// 	client, err := vms.NewClient(subscriptionID, resourceName)
-// 	if err != nil {
-// 		return &vms.Client{}, err
-// 	}
-// 	return client, nil
-// }
+func NewVM(ctx context.Context, subscriptionID, resourceGroup, resourceName string) (VirtualMachine, error) {
+	client, err := vms.NewClient(subscriptionID, resourceGroup)
+	if err != nil {
+		return VirtualMachine{}, err
+	}
+	vm, err := client.Get(ctx, resourceName)
+	if err != nil {
+		return VirtualMachine{}, err
+	}
+	return VirtualMachine{client: client, vm: vm}, nil
+}
 
-func (m VirtualMachineClient) Get(ctx context.Context, name string) error {
+func (m VirtualMachine) Get(ctx context.Context, name string) error {
 	var err error
 	m.vm, err = m.client.Get(ctx, name)
 	if err != nil {
@@ -64,23 +67,23 @@ func (m VirtualMachineClient) Get(ctx context.Context, name string) error {
 	return nil
 }
 
-func (m VirtualMachineClient) Update(ctx context.Context) error {
+func (m VirtualMachine) Update(ctx context.Context) error {
 	if err := m.client.Update(ctx, *m.vm.Spec().Name, m.vm); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m VirtualMachineClient) Tags() map[string]*string {
+func (m VirtualMachine) Tags() map[string]*string {
 	return m.vm.Spec().Tags
 }
 
-func (m VirtualMachineClient) SetTag(name string, value *string) {
+func (m VirtualMachine) SetTag(name string, value *string) {
 	m.vm.Spec().Tags[name] = value
 }
 
 // okay so maybe what I should have done is make a virtualmachinescaleset interface and then I can fake it more easily
-type VirtualMachineScaleSetClient struct {
+type VirtualMachineScaleSet struct {
 	client *scalesets.Client
 	vmss   *scalesets.Spec
 }
@@ -88,17 +91,23 @@ type VirtualMachineScaleSetClient struct {
 // I'm not sure this is actually modifying the client :(
 // maybe I can make this not a receiver method... and the others can be receiver methods? but then
 // I can't pass as parameter easily...
-// func NewClient(subscriptionID, resourceName string) (*vmss.Client, error) {
-// 	// func NewClient(m *VirtualMachineScaleSet, subscriptionID, resourceName string) error {
-// 	client, err := scalesets.NewClient(subscriptionID, resourceName)
-// 	if err != nil {
-// 		return client, err
-// 	}
-// 	return client, nil
-// }
+func NewVMSS(ctx context.Context, subscriptionID, resourceGroup, resourceName string) (VirtualMachineScaleSet, error) {
+	client, err := scalesets.NewClient(subscriptionID, resourceGroup)
+	if err != nil {
+		return VirtualMachineScaleSet{}, err
+	}
+	vmss, err := client.Get(ctx, resourceName)
+	if err != nil {
+		// log.Error(err, "failed to get VMSS")
+		return VirtualMachineScaleSet{}, err
+	}
+	// log.V(0).Info("configOptions", "sync direction", configOptions.SyncDirection)
+
+	return VirtualMachineScaleSet{client: client, vmss: vmss}, nil
+}
 
 // find a way to actually use get??
-func (m VirtualMachineScaleSetClient) Get(ctx context.Context, name string) error {
+func (m VirtualMachineScaleSet) Get(ctx context.Context, name string) error {
 	// func Get(m *VirtualMachineScaleSet, ctx context.Context, name string) error {
 	vmss, err := m.client.Get(ctx, name)
 	if err != nil {
@@ -108,18 +117,18 @@ func (m VirtualMachineScaleSetClient) Get(ctx context.Context, name string) erro
 	return nil
 }
 
-func (m VirtualMachineScaleSetClient) Update(ctx context.Context) error {
+func (m VirtualMachineScaleSet) Update(ctx context.Context) error {
 	if err := m.client.Update(ctx, *m.vmss.Spec().Name, m.vmss); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m VirtualMachineScaleSetClient) Tags() map[string]*string {
+func (m VirtualMachineScaleSet) Tags() map[string]*string {
 	return m.vmss.Spec().Tags
 }
 
-func (m VirtualMachineScaleSetClient) SetTag(name string, value *string) {
+func (m VirtualMachineScaleSet) SetTag(name string, value *string) {
 	m.vmss.Spec().Tags[name] = value
 }
 
@@ -160,37 +169,14 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 
 	switch provider.ResourceType {
 	case VMSS:
-		// Get VMSS client
-		vmssClient := VirtualMachineScaleSetClient{}
-		var err error
-		vmssClient.client, err = scalesets.NewClient(provider.SubscriptionID, provider.ResourceGroup)
-		if err != nil {
-			log.Error(err, "failed to create VMSS client")
-			return reconcile.Result{}, err
-		}
-		// have vmssClient wrapped in something that I pass to apply?
-
-		vmssClient.vmss, err = vmssClient.client.Get(r.ctx, provider.ResourceName)
-		if err != nil {
-			log.Error(err, "failed to get VMSS")
-		}
-
 		// Add VMSS tags to node
-		if err := r.reconcileVMSS(request, vmssClient, provider.ResourceName, &node, configOptions); err != nil {
+		if err := r.reconcileVMSS(request, provider, &node, configOptions); err != nil {
 			log.Error(err, "failed to apply tags to nodes")
 			return reconcile.Result{}, err
 		}
 	case VM:
-		// Get VM Client
-		vmClient := VirtualMachineClient{}
-		vmClient.client, err = vms.NewClient(provider.SubscriptionID, provider.ResourceGroup)
-		if err != nil {
-			log.Error(err, "failed to create VM client")
-			return reconcile.Result{}, err
-		}
-
 		// Add VM tags to node
-		if err := r.reconcileVMs(request, vmClient, provider.ResourceName, &node, configOptions); err != nil {
+		if err := r.reconcileVMs(request, provider, &node, configOptions); err != nil {
 			log.Error(err, "failed to apply tags to nodes")
 			return reconcile.Result{}, err
 		}
@@ -202,20 +188,40 @@ func (r *ReconcileTagLabelSync) Reconcile(request reconcile.Request) (reconcile.
 }
 
 // pass VMSS -> tags info and assign to nodes on VMs (unless node already has label)
-func (r *ReconcileTagLabelSync) reconcileVMSS(request reconcile.Request, vmssClient VirtualMachineScaleSetClient, resourceName string, node *corev1.Node, configOptions ConfigOptions) error {
+func (r *ReconcileTagLabelSync) reconcileVMSS(request reconcile.Request, provider azure.Resource, node *corev1.Node, configOptions ConfigOptions) error {
 	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
 	// each VMSS may have multiple nodes, but I think each nodes is only in one VMSS
 	// whats the fastest way to check if Node already has label? benefit of map
 
+	// // Get VMSS client
+	// vmssClient := VirtualMachineScaleSetClient{}
+	// var err error
+	// vmssClient.client, err = scalesets.NewClient(provider.SubscriptionID, provider.ResourceGroup)
+	// if err != nil {
+	// 	log.Error(err, "failed to create VMSS client")
+	// 	return err
+	// }
+	// // have vmssClient wrapped in something that I pass to apply?
+
+	// vmssClient.vmss, err = vmssClient.client.Get(r.ctx, provider.ResourceName)
+	// if err != nil {
+	// 	log.Error(err, "failed to get VMSS")
+	// }
+	// log.V(0).Info("configOptions", "sync direction", configOptions.SyncDirection)
+
 	log.V(0).Info("configOptions", "sync direction", configOptions.SyncDirection)
 
-	if err := r.applyTagsToNodes(request, vmssClient, node, configOptions); err != nil {
+	vmss, err := NewVMSS(r.ctx, provider.SubscriptionID, provider.ResourceGroup, provider.ResourceName)
+	if err != nil {
+		return err
+	}
+
+	if err := r.applyTagsToNodes(request, vmss, node, configOptions); err != nil {
 		return err
 	}
 
 	// assign all labels on Node to VMSS, if not already there
-
-	if err := r.applyLabelsToAzureResource(request, vmssClient, node, configOptions); err != nil {
+	if err := r.applyLabelsToAzureResource(request, vmss, node, configOptions); err != nil {
 		return err
 	}
 
@@ -223,26 +229,46 @@ func (r *ReconcileTagLabelSync) reconcileVMSS(request reconcile.Request, vmssCli
 }
 
 // I want to get to the point where this function can be called on either vm or vmss
-func (r *ReconcileTagLabelSync) reconcileVMs(request reconcile.Request, vmClient VirtualMachineClient, resourceName string, node *corev1.Node, configOptions ConfigOptions) error {
+func (r *ReconcileTagLabelSync) reconcileVMs(request reconcile.Request, provider azure.Resource, node *corev1.Node, configOptions ConfigOptions) error {
 	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
+
+	// // Get VM Client
+	// vmClient := VirtualMachineClient{}
+	// var err error
+	// vmClient.client, err = vms.NewClient(provider.SubscriptionID, provider.ResourceGroup)
+	// if err != nil {
+	// 	log.Error(err, "failed to create VM client")
+	// 	return err
+	// }
+
+	// // did I accidentally delete code here?
+	// vmClient.vm, err = vmClient.client.Get(r.ctx, provider.ResourceName)
+	// if err != nil {
+	// 	return err
+	// }
 
 	log.V(0).Info("configOptions", "sync direction", configOptions.SyncDirection)
 
-	if err := r.applyTagsToNodes(request, vmClient, node, configOptions); err != nil {
+	vm, err := NewVM(r.ctx, provider.SubscriptionID, provider.ResourceGroup, provider.ResourceName)
+	if err != nil {
 		return err
 	}
 
-	if err := r.applyLabelsToAzureResource(request, vmClient, node, configOptions); err != nil {
+	if err := r.applyTagsToNodes(request, vm, node, configOptions); err != nil {
+		return err
+	}
+
+	if err := r.applyLabelsToAzureResource(request, vm, node, configOptions); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *ReconcileTagLabelSync) applyTagsToNodes(request reconcile.Request, computeClient ComputeResourceClient, node *corev1.Node, configOptions ConfigOptions) error {
+func (r *ReconcileTagLabelSync) applyTagsToNodes(request reconcile.Request, computeResource ComputeResource, node *corev1.Node, configOptions ConfigOptions) error {
 	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
 
 	if configOptions.SyncDirection == TwoWay || configOptions.SyncDirection == ARMToNode {
-		for tagName, tagVal := range computeClient.Tags() {
+		for tagName, tagVal := range computeResource.Tags() {
 			// what if key exists but different value? what takes priority? currently just going to ignore and only add tags that don't exist
 			validLabelName := ConvertTagNameToValidLabelName(tagName, configOptions)
 			labelVal, ok := node.Labels[validLabelName]
@@ -281,13 +307,13 @@ func (r *ReconcileTagLabelSync) applyTagsToNodes(request reconcile.Request, comp
 }
 
 // I need to make sure I can get update to work with ComputeResource interface! value vs reference issue
-func (r *ReconcileTagLabelSync) applyLabelsToAzureResource(request reconcile.Request, computeClient ComputeResourceClient, node *corev1.Node, configOptions ConfigOptions) error {
+func (r *ReconcileTagLabelSync) applyLabelsToAzureResource(request reconcile.Request, computeResource ComputeResource, node *corev1.Node, configOptions ConfigOptions) error {
 	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
 
 	if configOptions.SyncDirection == TwoWay || configOptions.SyncDirection == NodeToARM {
-		if len(computeClient.Tags()) > maxNumTags {
+		if len(computeResource.Tags()) > maxNumTags {
 			// error
-			log.V(1).Info("can't add any more tags", "number of tags", len(computeClient.Tags()))
+			log.V(1).Info("can't add any more tags", "number of tags", len(computeResource.Tags()))
 			return nil
 		}
 		for labelName, labelVal := range node.Labels {
@@ -299,14 +325,14 @@ func (r *ReconcileTagLabelSync) applyLabelsToAzureResource(request reconcile.Req
 				continue
 			}
 			validTagName := ConvertLabelNameToValidTagName(labelName, configOptions)
-			tagVal, ok := computeClient.Tags()[validTagName]
+			tagVal, ok := computeResource.Tags()[validTagName]
 			if !ok {
 				// add label as tag
 				log.V(1).Info("applying labels to VMSS", "labelName", labelName, "labelVal", labelVal)
 
 				// computeClient.Tags()[validTagName] = &labelVal // problem!!!
-				computeClient.SetTag(validTagName, &labelVal)
-				if err := computeClient.Update(r.ctx); err != nil {
+				computeResource.SetTag(validTagName, &labelVal)
+				if err := computeResource.Update(r.ctx); err != nil {
 					// log.Error(err, "failed to update VMSS", "labelName", validTagName, "labelVal", labelVal)
 					log.Error(err, "failed to update VMSS", "labelName", labelName, "labelVal", labelVal)
 				}
@@ -315,8 +341,8 @@ func (r *ReconcileTagLabelSync) applyLabelsToAzureResource(request reconcile.Req
 				case NodePrecedence:
 					// set tag anyway
 					// computeClient.Tags()[validTagName] = &labelVal // problem!!!
-					computeClient.SetTag(validTagName, &labelVal)
-					if err := computeClient.Update(r.ctx); err != nil {
+					computeResource.SetTag(validTagName, &labelVal)
+					if err := computeResource.Update(r.ctx); err != nil {
 						// log.Error(err, "failed to update VMSS", "labelName", validTagName, "labelVal", labelVal)
 						log.Error(err, "failed to update VMSS", "labelName", labelName, "labelVal", labelVal)
 					}
