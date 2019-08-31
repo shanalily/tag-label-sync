@@ -32,6 +32,7 @@ type ReconcileTagLabelSync struct {
 	ctx      context.Context
 }
 
+// now I should be able to make ComputeResource objects in testing right?
 type ComputeResource interface {
 	// how can I make an interface for Spec that allows me to use VM and VMSS with the same function?
 	// how am I supposed to do this when different clients are returned?
@@ -193,22 +194,6 @@ func (r *ReconcileTagLabelSync) reconcileVMSS(request reconcile.Request, provide
 	// each VMSS may have multiple nodes, but I think each nodes is only in one VMSS
 	// whats the fastest way to check if Node already has label? benefit of map
 
-	// // Get VMSS client
-	// vmssClient := VirtualMachineScaleSetClient{}
-	// var err error
-	// vmssClient.client, err = scalesets.NewClient(provider.SubscriptionID, provider.ResourceGroup)
-	// if err != nil {
-	// 	log.Error(err, "failed to create VMSS client")
-	// 	return err
-	// }
-	// // have vmssClient wrapped in something that I pass to apply?
-
-	// vmssClient.vmss, err = vmssClient.client.Get(r.ctx, provider.ResourceName)
-	// if err != nil {
-	// 	log.Error(err, "failed to get VMSS")
-	// }
-	// log.V(0).Info("configOptions", "sync direction", configOptions.SyncDirection)
-
 	log.V(0).Info("configOptions", "sync direction", configOptions.SyncDirection)
 
 	vmss, err := NewVMSS(r.ctx, provider.SubscriptionID, provider.ResourceGroup, provider.ResourceName)
@@ -231,21 +216,6 @@ func (r *ReconcileTagLabelSync) reconcileVMSS(request reconcile.Request, provide
 // I want to get to the point where this function can be called on either vm or vmss
 func (r *ReconcileTagLabelSync) reconcileVMs(request reconcile.Request, provider azure.Resource, node *corev1.Node, configOptions ConfigOptions) error {
 	log := r.Log.WithValues("tag-label-sync", request.NamespacedName)
-
-	// // Get VM Client
-	// vmClient := VirtualMachineClient{}
-	// var err error
-	// vmClient.client, err = vms.NewClient(provider.SubscriptionID, provider.ResourceGroup)
-	// if err != nil {
-	// 	log.Error(err, "failed to create VM client")
-	// 	return err
-	// }
-
-	// // did I accidentally delete code here?
-	// vmClient.vm, err = vmClient.client.Get(r.ctx, provider.ResourceName)
-	// if err != nil {
-	// 	return err
-	// }
 
 	log.V(0).Info("configOptions", "sync direction", configOptions.SyncDirection)
 
