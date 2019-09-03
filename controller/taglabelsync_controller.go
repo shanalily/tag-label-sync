@@ -32,11 +32,13 @@ type ReconcileTagLabelSync struct {
 	ctx      context.Context
 }
 
-// now I should be able to make ComputeResource objects in testing right?
+// now I should be able to make ComputeResource objects in testing right? Is that too mock object-y if
+// I define new functions?
+// I may still need to make some functions easier to test.
 type ComputeResource interface {
 	// how can I make an interface for Spec that allows me to use VM and VMSS with the same function?
 	// how am I supposed to do this when different clients are returned?
-	Get(ctx context.Context, name string) error
+	// Get(ctx context.Context, name string) error // return type Spec?
 	Update(ctx context.Context) error
 	Tags() map[string]*string
 	SetTag(name string, value *string)
@@ -107,9 +109,8 @@ func NewVMSS(ctx context.Context, subscriptionID, resourceGroup, resourceName st
 	return VirtualMachineScaleSet{client: client, vmss: vmss}, nil
 }
 
-// find a way to actually use get??
+// find a way to actually use get?? can I make a spec interface and have everything implement Spec() or something?
 func (m VirtualMachineScaleSet) Get(ctx context.Context, name string) error {
-	// func Get(m *VirtualMachineScaleSet, ctx context.Context, name string) error {
 	vmss, err := m.client.Get(ctx, name)
 	if err != nil {
 		return err
@@ -118,6 +119,7 @@ func (m VirtualMachineScaleSet) Get(ctx context.Context, name string) error {
 	return nil
 }
 
+// does this work the wayw it's supposed to?
 func (m VirtualMachineScaleSet) Update(ctx context.Context) error {
 	if err := m.client.Update(ctx, *m.vmss.Spec().Name, m.vmss); err != nil {
 		return err
@@ -129,6 +131,7 @@ func (m VirtualMachineScaleSet) Tags() map[string]*string {
 	return m.vmss.Spec().Tags
 }
 
+// is this actually being set? deep or shallow copy?
 func (m VirtualMachineScaleSet) SetTag(name string, value *string) {
 	m.vmss.Spec().Tags[name] = value
 }

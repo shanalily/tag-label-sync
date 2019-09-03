@@ -50,7 +50,6 @@ func NewConfigOptions(configMap corev1.ConfigMap) (ConfigOptions, error) {
 		configOptions.SyncDirection = ARMToNode
 	}
 
-	// if _, err := strconv.Atoi(configOptions.Interval); err != nil {
 	if _, err := time.ParseDuration(configOptions.Interval); err != nil {
 		// error?
 		configOptions.Interval = "10h"

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -19,6 +20,10 @@ func ValidTagName(labelName string, configOptions ConfigOptions) bool {
 	return validTagName(labelWithoutPrefix(labelName, configOptions.LabelPrefix))
 }
 
+func ValidLabelName(tagName string) bool {
+	return validLabelName(tagName)
+}
+
 func ConvertTagNameToValidLabelName(tagName string, configOptions ConfigOptions) string {
 	// lstrip configOptions.TagPrefix if there
 	// don't forget to get rid of '.' after 'node.labels'... are there prefixes here?
@@ -29,7 +34,7 @@ func ConvertTagNameToValidLabelName(tagName string, configOptions ConfigOptions)
 
 	// truncate name segment to 63 characters or less
 	if len(result) > maxLabelNameLen {
-		result = result[:maxLabelNameLen+1]
+		result = result[:maxLabelNameLen]
 	}
 
 	// must begin and end with alphanumeric character with -,_,. and alphanumerics in between
@@ -40,6 +45,7 @@ func ConvertTagNameToValidLabelName(tagName string, configOptions ConfigOptions)
 	return result
 }
 
+// assume validated??
 func ConvertLabelNameToValidTagName(labelName string, configOptions ConfigOptions) string {
 	// get rid of '/' and other characters.
 	// also detect if 'azure.tags' is in the name to get rid of it? also get rid of '/' after 'azure.tags'
@@ -60,12 +66,17 @@ func ConvertLabelNameToValidTagName(labelName string, configOptions ConfigOption
 func ConvertTagValToValidLabelVal(tagVal string) string {
 	result := tagVal
 	if len(result) > maxLabelValLen {
-		result = result[:maxLabelValLen+1]
+		result = result[:maxLabelValLen]
 	}
 	return result
 }
 
-func ConvertLabelValToValidTagVal() {
+func ConvertLabelValToValidTagVal(labelVal string) string {
+	result := labelVal
+	if len(result) > maxTagValLen {
+		result = result[:maxTagValLen]
+	}
+	return result
 }
 
 func labelWithPrefix(labelName, prefix string) string {
@@ -89,7 +100,28 @@ func tagWithoutPrefix(tagName, prefix string) string {
 }
 
 func validTagName(labelName string) bool {
+	if len(labelName) > maxTagNameLen {
+		return false
+	}
 	if strings.ContainsAny(labelName, invalidTagChars) {
+		return false
+	}
+	return true
+}
+
+func validLabelName(tagName string) bool {
+	if len(tagName) > maxTagNameLen {
+		return false
+	}
+	re := regexp.MustCompile("^[a-zA-Z0-9_-.]*$")
+	if !re.MatchString(tagName) {
+		return false
+	}
+	alphanumRe := regexp.MustCompile("[a-zA-Z0-9]")
+	nameLen := len(tagName)
+	if nameLen > 0 &&
+		(!alphanumRe.MatchString(tagName[0:1]) ||
+			!alphanumRe.MatchString(tagName[nameLen-1:nameLen])) {
 		return false
 	}
 	return true
